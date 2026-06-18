@@ -1,0 +1,48 @@
+name: Auto-Sync and Whitelist
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch: 
+
+jobs:
+  sync-and-patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout automation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          # This exact email maps the commit to the system bot, keeping your contribution graph clean.
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream master
+        run: |
+          git remote add upstream https://github.com/tree-sitter-grammars/tree-sitter-vim.git
+          git fetch upstream master
+
+      - name: Sync pure mirror
+        run: |
+          # Creates/updates the master branch to perfectly match upstream
+          git checkout -B master upstream/master
+          git push origin master --force
+
+      - name: Patch and deploy
+        run: |
+          # Creates the patched branch based on the freshly synced master
+          git checkout -B release-whitelisted upstream/master
+          
+          jq '.files = (.files // []) + ["rules"] | .files |= unique' package.json > tmp.json && mv tmp.json package.json
+          
+          git add package.json
+          git commit -m "chore: auto-whitelist rules directory for npm packing"
+          
+          # Push the patched branch
+          git push origin release-whitelisted --force
