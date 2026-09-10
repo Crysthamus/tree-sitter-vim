@@ -21,14 +21,15 @@
     "vim"
   ],
   "files": [
-    "grammar.js",
-    "tree-sitter.json",
+    "*.wasm",
     "binding.gyp",
-    "prebuilds/**",
     "bindings/node/*",
+    "grammar.js",
+    "prebuilds/**",
     "queries/*",
+    "rules",
     "src/**",
-    "*.wasm"
+    "tree-sitter.json"
   ],
   "dependencies": {
     "node-addon-api": "^8.5.0",
